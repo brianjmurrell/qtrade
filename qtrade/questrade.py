@@ -2,6 +2,8 @@
 
 import logging
 from typing import Any, Dict, List, Optional, Union
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 import requests
 import yaml
@@ -35,10 +37,26 @@ class Questrade:
         access_code: Optional[str] = None,
         token_yaml: Optional[str] = None,
         save_yaml: bool = True,
+        retries=3,
+        backoff_factor=0.3
     ):
         self.access_token: TokenDict
         self.headers = None
         self.session = requests.Session()
+        # Configure the Retry strategy
+        retry = Retry(
+            total=retries,
+            read=retries,
+            connect=retries, # This handles connection errors, including DNS failures
+            backoff_factor=backoff_factor,
+            # Set allowed_methods to False to allow retries on methods like POST as well
+            allowed_methods=False,
+            status_forcelist=[500, 502, 503, 504], # Also retry on common server errors
+        )
+        # Mount the HTTPAdapter to the session for both http and https
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
 
         self.access_code = access_code
         self.token_yaml = token_yaml

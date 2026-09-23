@@ -53,7 +53,7 @@ class Questrade:
             # add headers to session
             self.session.headers.update(self.headers)
         else:
-            self._get_access_token(save_yaml=save_yaml)
+            self._get_access_token(save_yaml=save_yaml, yaml_path=token_yaml)
 
         self.account_id = None
         self.positions = None
